@@ -4,24 +4,35 @@ import matplotlib.pyplot as plt
 
 # 使用beale函数作为目标函数
 def objective_function(x):
-    return (1.5 - x[0] + x[0] * x[1])**2 + (2.25 - x[0] + x[0] * x[1]**2)**2 + (2.625 - x[0] + x[0]*(x[1]**3))**2
+    #return (1.5 - x[0] + x[0] * x[1])**2 + (2.25 - x[0] + x[0] * x[1]**2)**2 + (2.625 - x[0] + x[0]*(x[1]**3))**2
+    return ((1+(x[0]+x[1]+1)**2*(19-14*x[0]+3*x[0]**2-14*x[1]+6*x[0]*x[1]+3*x[1]**2)) * (30+(2*x[0]-3*x[1])**2*(18-32*x[0]+12*x[0]**2+48*x[1]-36*x[0]*x[1]+27*x[1]**2)))
 
-# 定义约束条件
+# # 定义约束条件
+# def inequality_constraint1(x):
+#     # x小于等于4.5
+#     return x[0] - 4.5
+# def inequality_constraint2(x):
+#     # y小于等于4.5
+#     return x[1] - 4.5
+# def inequality_constraint3(x):
+#     # x大于等于-4.5
+#     return -x[0] - 4.5
+# def inequality_constraint4(x):
+#     # y大于等于-4.5
+#     return -x[1] - 4.5
+
 def inequality_constraint1(x):
     # x小于等于4.5
-    return x[0] - 4.5
-
+    return x[0] - 2
 def inequality_constraint2(x):
     # y小于等于4.5
-    return x[1] - 4.5
-
+    return x[1] - 2
 def inequality_constraint3(x):
     # x大于等于-4.5
-    return -x[0] - 4.5
-
+    return -x[0] - 2
 def inequality_constraint4(x):
     # y大于等于-4.5
-    return -x[1] - 4.5
+    return -x[1] - 2
 
 # 定义等式约束（例如：前两个变量相等）
 def equality_constraint(x):
