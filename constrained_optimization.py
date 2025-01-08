@@ -31,12 +31,14 @@ class QuadraticPenaltyMethod:
 
     def optimize(self, x0, max_iter=10000):
         x = x0.copy()
+        y = []
+        y.append(self.penalty_function(x0))
         for k in range(max_iter):
             def gradient_func(x, f, step):
                 return calculate_double_way_differential_gradient(x, f, step)
             #x, val, _, _ = grad_strongwolfe(self.penalty_function, gradient_func, x, 1e-4, self.tao*(self.rou)**k)
             x, val, _, _ = grad_strongwolfe(self.penalty_function, gradient_func, x, 1e-4, self.epsilon)
-            
+            y.append(self.penalty_function(x))
             # 检查约束违反程度
             inequality_violation = max([max(0, g(x)) for g in self.inequality_constraints], default=0)
             equality_violation = max([abs(h(x)) for h in self.equality_constraints], default=0)
@@ -46,4 +48,4 @@ class QuadraticPenaltyMethod:
                 
             self.mu *= self.beta
             
-        return x, self.f(x)
+        return x, self.f(x), y
