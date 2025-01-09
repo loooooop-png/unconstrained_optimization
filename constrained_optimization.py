@@ -35,11 +35,19 @@ class QuadraticPenaltyMethod:
         prev_penalty = float('inf')
         y.append(self.penalty_function(x0))
         
+        # Track both maximum and minimum beta and their line search values
+        max_beta_u = None
+        min_beta_u = None
+        max_beta_value = float('-inf')
+        min_beta_value = float('inf')
+        current_u = None
+        
         for k in range(max_iter):
             def gradient_func(x, f, step):
                 return calculate_double_way_differential_gradient(x, f, step)
             
-            x, val, _, _ = grad_strongwolfe(self.penalty_function, gradient_func, x, 1e-4, self.epsilon)
+            x, val, _, u = grad_strongwolfe(self.penalty_function, gradient_func, x, 1e-4, self.epsilon)
+            current_u = u  # Store current line search values
             current_penalty = self.penalty_function(x)
             y.append(current_penalty)
             
@@ -53,16 +61,48 @@ class QuadraticPenaltyMethod:
             
             # 动态调整 beta
             if max_violation > 0.1:  # 约束违反严重
-                self.beta = min(10.0, self.beta * 2)  # 快速增加惩罚
+                new_beta = min(10.0, self.beta * 2)  # 快速增加惩罚
             elif penalty_change < 1e-3:  # 收敛较慢
-                self.beta = max(1.1, self.beta * 0.8)  # 减小惩罚增长率
+                new_beta = max(1.1, self.beta * 0.8)  # 减小惩罚增长率
             else:  # 正常情况
-                self.beta = 1.5  # 使用默认值
+                new_beta = 1.5  # 使用默认值
+            
+            # Update max_beta_u and min_beta_u if we have new extreme values
+            if new_beta > max_beta_value:
+                max_beta_value = new_beta
+                max_beta_u = current_u
+            if new_beta < min_beta_value:
+                min_beta_value = new_beta
+                min_beta_u = current_u
+                
+            self.beta = new_beta
             
             if max_violation < self.epsilon:
                 break
             
             self.mu *= self.beta
             prev_penalty = current_penalty
+        
+        # Plot the line search values for maximum and minimum beta
+        if max_beta_u is not None or min_beta_u is not None:
+            import matplotlib.pyplot as plt
+            plt.figure(figsize=(10, 5))
             
+            if max_beta_u is not None:
+                plt.subplot(1, 2, 1)
+                plt.plot(range(len(max_beta_u)), max_beta_u)
+                plt.title(f'Line Search Values at Maximum β = {max_beta_value:.2f}')
+                plt.xlabel('Iteration')
+                plt.ylabel('Penalty Function Value')
+                
+            if min_beta_u is not None:
+                plt.subplot(1, 2, 2)
+                plt.plot(range(len(min_beta_u)), min_beta_u)
+                plt.title(f'Line Search Values at Minimum β = {min_beta_value:.2f}')
+                plt.xlabel('Iteration')
+                plt.ylabel('Penalty Function Value')
+                
+            plt.tight_layout()
+            plt.show()
+                
         return x, self.f(x), y
