@@ -32,20 +32,37 @@ class QuadraticPenaltyMethod:
     def optimize(self, x0, max_iter=10000):
         x = x0.copy()
         y = []
+        prev_penalty = float('inf')
         y.append(self.penalty_function(x0))
+        
         for k in range(max_iter):
             def gradient_func(x, f, step):
                 return calculate_double_way_differential_gradient(x, f, step)
-            #x, val, _, _ = grad_strongwolfe(self.penalty_function, gradient_func, x, 1e-4, self.tao*(self.rou)**k)
+            
             x, val, _, _ = grad_strongwolfe(self.penalty_function, gradient_func, x, 1e-4, self.epsilon)
-            y.append(self.penalty_function(x))
+            current_penalty = self.penalty_function(x)
+            y.append(current_penalty)
+            
             # 检查约束违反程度
             inequality_violation = max([max(0, g(x)) for g in self.inequality_constraints], default=0)
             equality_violation = max([abs(h(x)) for h in self.equality_constraints], default=0)
+            max_violation = max(inequality_violation, equality_violation)
             
-            if max(inequality_violation, equality_violation) < self.epsilon:
+            # 计算惩罚值的相对变化
+            penalty_change = abs(prev_penalty - current_penalty) / (abs(prev_penalty) + 1e-10)
+            
+            # 动态调整 beta
+            if max_violation > 0.1:  # 约束违反严重
+                self.beta = min(10.0, self.beta * 2)  # 快速增加惩罚
+            elif penalty_change < 1e-3:  # 收敛较慢
+                self.beta = max(1.1, self.beta * 0.8)  # 减小惩罚增长率
+            else:  # 正常情况
+                self.beta = 1.5  # 使用默认值
+            
+            if max_violation < self.epsilon:
                 break
-                
+            
             self.mu *= self.beta
+            prev_penalty = current_penalty
             
         return x, self.f(x), y
